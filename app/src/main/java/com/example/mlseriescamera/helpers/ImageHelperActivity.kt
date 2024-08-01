@@ -1,7 +1,10 @@
 package com.example.mlseriescamera.helpers
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,9 +19,11 @@ import androidx.recyclerview.widget.GridLayoutManager
 
 import com.example.mlseriescamera.R
 import com.example.mlseriescamera.databinding.ActivityImageHelperBinding
+import java.io.IOException
 
 class ImageHelperActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 100
+    private val REQUEST_PICK_IMAGE_CODE = 1000
     private lateinit var binding: ActivityImageHelperBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,10 +39,18 @@ class ImageHelperActivity : AppCompatActivity() {
             insets
         }
 
-        checkAndRequestPermissions()
+        //checkAndRequestPermissions()
 
-        println("debug")
+        binding.imageRecyclerView.layoutManager = GridLayoutManager(this@ImageHelperActivity, 3)
+
+        binding.btnPickImage.setOnClickListener {
+            pickImage()
+        }
+        binding.btnStartCamera.setOnClickListener {
+            startCamera()
+        }
     }
+
 
     private fun checkAndRequestPermissions() {
         val permissionStatus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -60,8 +73,7 @@ class ImageHelperActivity : AppCompatActivity() {
                     arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES),
                     PERMISSION_REQUEST_CODE
                 )
-            }
-            else{
+            } else {
                 ActivityCompat.requestPermissions(
                     this@ImageHelperActivity,
                     arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
@@ -118,8 +130,60 @@ class ImageHelperActivity : AppCompatActivity() {
                 imageUris.add(contentUri)
             }
         }
-
-        binding.imageRecyclerView.layoutManager = GridLayoutManager(this@ImageHelperActivity,3)
+        binding.imageRecyclerView.layoutManager = GridLayoutManager(this@ImageHelperActivity, 3)
         binding.imageRecyclerView.adapter = ImageAdapter(imageUris)
+    }
+
+    private fun pickImage() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        // android'in başka bir app'in context'ine ulaşmamız için bize sağladığı parametre : ACTION_GET_CONTENT
+        intent.setType("image/*");
+
+        // android'den bir şey isteyeceğiz o da bize sonucunu geri gönderecek
+        startActivityForResult(intent, REQUEST_PICK_IMAGE_CODE)
+        // bu bize uri'i yani resmimiz androidde nerede saklı bunu getirecek
+        // onActivityResult
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_PICK_IMAGE_CODE) {
+                data?.let {
+                    val uri = data.data
+                    uri?.let {
+                        val imageUris = mutableListOf<Uri>()
+                        imageUris.add(uri)
+                        binding.imageRecyclerView.adapter = ImageAdapter(imageUris)
+
+                        val bitmap: Bitmap? = loadFromUri(uri)
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun loadFromUri(uri: Uri): Bitmap? {
+        var bitmap: Bitmap? = null
+
+        try {
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O_MR1){
+                // modern way to resolve to bitmap
+                val source : ImageDecoder.Source = ImageDecoder.createSource(contentResolver, uri)
+                bitmap = ImageDecoder.decodeBitmap(source)
+            }else{
+                bitmap = MediaStore.Images.Media.getBitmap(contentResolver, uri)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        return bitmap
+    }
+
+    private fun startCamera() {
     }
 }
