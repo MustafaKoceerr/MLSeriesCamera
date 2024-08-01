@@ -12,16 +12,23 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.GridLayoutManager
 
 import com.example.mlseriescamera.R
+import com.example.mlseriescamera.databinding.ActivityImageHelperBinding
+import com.example.mlseriescamera.databinding.ActivityMainBinding
 
 class ImageHelperActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 100
+    private lateinit var binding: ActivityImageHelperBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_image_helper)
+        binding = ActivityImageHelperBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+        //setContentView(R.layout.activity_image_helper)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -96,6 +103,8 @@ class ImageHelperActivity : AppCompatActivity() {
         val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME)
         val cursor: Cursor? = contentResolver.query(uri, projection, null, null, null)
 
+        val imageUris = mutableListOf<Uri>()
+
         cursor?.use {
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
@@ -107,8 +116,11 @@ class ImageHelperActivity : AppCompatActivity() {
 
                 // Burada contentUri kullanarak resim dosyasını okuyabilir veya görüntüleyebilirsiniz
                 println("Resim adi: $name, URI: $contentUri")
+                imageUris.add(contentUri)
             }
         }
 
+        binding.imageRecyclerView.layoutManager = GridLayoutManager(this@ImageHelperActivity,3)
+        binding.imageRecyclerView.adapter = ImageAdapter(imageUris)
     }
 }
