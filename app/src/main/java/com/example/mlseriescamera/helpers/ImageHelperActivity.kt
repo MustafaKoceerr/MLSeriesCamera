@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 
 import com.example.mlseriescamera.R
 import com.example.mlseriescamera.databinding.ActivityImageHelperBinding
-import com.example.mlseriescamera.databinding.ActivityMainBinding
 
 class ImageHelperActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 100
@@ -49,7 +48,7 @@ class ImageHelperActivity : AppCompatActivity() {
         } else {
             ContextCompat.checkSelfPermission(
                 this@ImageHelperActivity,
-                android.Manifest.permission.READ_MEDIA_IMAGES
+                android.Manifest.permission.READ_EXTERNAL_STORAGE
             )
         }
 
